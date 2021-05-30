@@ -190,9 +190,10 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                                     if *c == 0x60 { // `
                                         it.next();
                                         result.push(Token::EAcute);
+                                    } else {
+                                        //result.push(Token::Printable(*c as char));
+                                        result.push(Token::Printable('e'));
                                     }
-                                } else {
-                                    result.push(Token::Printable(*c as char));
                                 }
                             } else {
                                 result.push(Token::Printable(*c as char));
