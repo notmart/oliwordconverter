@@ -177,22 +177,28 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                 it.next();
                 // Italian-specific: Check for accents
                 let accent = vec!['`' as u8];
-                let mut found = false;
+                let mut possibleAccent = false;
+                let mut foundAccent = false;
 
                 match code {
                     0x68 => { //h: if it's he` will be an eacute
-                        found = true;
+                        possibleAccent = true;
                         result.push(Token::Printable(*code as char));
                         if let Some(&c) = it.peek() {
                             it.next();
                             if *c == 0x65 { // e
                                 if let Some(&c) = it.peek() {
+                                    it.next();
                                     if *c == 0x60 { // `
-                                        it.next();
+                                        foundAccent = true;
                                         result.push(Token::EAcute);
                                     } else {
-                                        //result.push(Token::Printable(*c as char));
                                         result.push(Token::Printable('e'));
+                                        if *c > 0x20 && *c <= 0x7E {
+                                            result.push(Token::Printable(*c as char));
+                                        } else if *c >= 0x80 && *c <= 0x8D {
+                                            result.push(Token::Printable(' '));
+                                        }
                                     }
                                 }
                             } else {
@@ -203,7 +209,7 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     0x61 => { //a
                         if let Some(&c) = it.peek() {
                             if *c == 0x60 { // `
-                                found = true;
+                                foundAccent = true;
                                 it.next();
                                 result.push(Token::AGrave);
                             }
@@ -212,7 +218,7 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     0x65 => { //e
                         if let Some(&c) = it.peek() {
                             if *c == 0x60 { // `
-                                found = true;
+                                foundAccent = true;
                                 it.next();
                                 result.push(Token::EGrave);
                             }
@@ -221,7 +227,7 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     0x69 => { //i
                         if let Some(&c) = it.peek() {
                             if *c == 0x60 { // `
-                                found = true;
+                                foundAccent = true;
                                 it.next();
                                 result.push(Token::IGrave);
                             }
@@ -230,7 +236,7 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     0x6F => { //o
                         if let Some(&c) = it.peek() {
                             if *c == 0x60 { // `
-                                found = true;
+                                foundAccent = true;
                                 it.next();
                                 result.push(Token::OGrave);
                             }
@@ -239,7 +245,7 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     0x75 => { //u
                         if let Some(&c) = it.peek() {
                             if *c == 0x60 { // `
-                                found = true;
+                                foundAccent = true;
                                 it.next();
                                 result.push(Token::UGrave);
                             }
@@ -248,14 +254,14 @@ fn lex(input: &Vec<u8>) -> Vec<Token> {
                     _ => {}
                 }
 
-                if found {
+                if foundAccent {
                     if let Some(&c) = it.peek() {
                         if *c > 0x20 && *c <= 0x7E { // Printable Non space
                             // Make sure there is a space after accent
                             result.push(Token::Printable(' '));
                         }
                     }
-                } else { // put the found character as tonen
+                } else if !possibleAccent { // put the found character as token
                     result.push(Token::Printable(*code as char));
                 }
             }
